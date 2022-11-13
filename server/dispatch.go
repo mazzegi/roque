@@ -35,3 +35,7 @@ func (d *Dispatcher) ReadContext(ctx context.Context, clientID string, topic mes
 		Data:  []byte(fmt.Sprintf("for [%s] on [%s]: %s", clientID, topic, time.Now().Format(time.RFC3339))),
 	}, nil
 }
+
+func (d *Dispatcher) CommitContext(ctx context.Context, clientID string, topic message.Topic, idx int) error {
+	return nil
+}

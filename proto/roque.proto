@@ -9,6 +9,7 @@ message Void {}
 message Message {
     string topic = 1;
     bytes  data = 2;
+    int64 idx = 3;
 }
 
 // write
@@ -22,9 +23,17 @@ message ReadRequest {
     string topic = 2;        
 }
 
+// commit
+message CommitRequest {
+    string ClientID = 1;
+    string topic = 2;        
+    int64 idx = 3;
+}
+
 // service
 service Roque {
     rpc Write (stream WriteRequest) returns (Void);
     rpc Read (ReadRequest) returns (Message);
     rpc Stream(ReadRequest) returns (stream Message);
+    rpc Commit(CommitRequest) returns (Void);
 }

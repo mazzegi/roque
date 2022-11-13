@@ -74,3 +74,11 @@ func (s *Server) Stream(in *proto.ReadRequest, out proto.Roque_StreamServer) err
 		}
 	}
 }
+
+func (s *Server) Commit(ctx context.Context, in *proto.CommitRequest) (*proto.Void, error) {
+	err := s.dispatcher.CommitContext(ctx, in.ClientID, message.Topic(in.Topic), int(in.Idx))
+	if err != nil {
+		return nil, fmt.Errorf("dispatcher.commit: %w", err)
+	}
+	return &proto.Void{}, nil
+}

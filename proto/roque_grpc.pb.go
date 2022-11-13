@@ -25,6 +25,7 @@ type RoqueClient interface {
 	Write(ctx context.Context, opts ...grpc.CallOption) (Roque_WriteClient, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error)
 	Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error)
+	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Void, error)
 }
 
 type roqueClient struct {
@@ -110,6 +111,15 @@ func (x *roqueStreamClient) Recv() (*Message, error) {
 	return m, nil
 }
 
+func (c *roqueClient) Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/proto.Roque/Commit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoqueServer is the server API for Roque service.
 // All implementations must embed UnimplementedRoqueServer
 // for forward compatibility
@@ -117,6 +127,7 @@ type RoqueServer interface {
 	Write(Roque_WriteServer) error
 	Read(context.Context, *ReadRequest) (*Message, error)
 	Stream(*ReadRequest, Roque_StreamServer) error
+	Commit(context.Context, *CommitRequest) (*Void, error)
 	mustEmbedUnimplementedRoqueServer()
 }
 
@@ -132,6 +143,9 @@ func (UnimplementedRoqueServer) Read(context.Context, *ReadRequest) (*Message, e
 }
 func (UnimplementedRoqueServer) Stream(*ReadRequest, Roque_StreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
+}
+func (UnimplementedRoqueServer) Commit(context.Context, *CommitRequest) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
 }
 func (UnimplementedRoqueServer) mustEmbedUnimplementedRoqueServer() {}
 
@@ -211,6 +225,24 @@ func (x *roqueStreamServer) Send(m *Message) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Roque_Commit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoqueServer).Commit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Roque/Commit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoqueServer).Commit(ctx, req.(*CommitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Roque_ServiceDesc is the grpc.ServiceDesc for Roque service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -221,6 +253,10 @@ var Roque_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _Roque_Read_Handler,
+		},
+		{
+			MethodName: "Commit",
+			Handler:    _Roque_Commit_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

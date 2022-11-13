@@ -77,3 +77,15 @@ func (clt *Client) StreamContext(ctx context.Context, clientID string, topic mes
 	}()
 	return msgC, nil
 }
+
+func (clt *Client) CommitContext(ctx context.Context, clientID string, topic message.Topic, idx int) error {
+	_, err := clt.roqueClt.Commit(ctx, &proto.CommitRequest{
+		ClientID: clientID,
+		Topic:    string(topic),
+		Idx:      int64(idx),
+	})
+	if err != nil {
+		return fmt.Errorf("roqueclt.read: %w", err)
+	}
+	return nil
+}
