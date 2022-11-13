@@ -6,11 +6,6 @@ package roqueproto;
 
 message Void {}
 
-enum RequestStatus {
-    STATUS_OK = 0;
-    STATUS_ERR = 1;
-}
-
 message Message {
     string topic = 1;
     bytes  data = 2;
@@ -21,26 +16,15 @@ message WriteRequest {
     Message message = 2;
 }
 
-message WriteResult {
-    RequestStatus status = 1;
-    string statusText = 2;
-}
-
 // read
 message ReadRequest {
     string ClientID = 1;
     string topic = 2;        
 }
 
-message ReadResult {
-    RequestStatus status = 1;
-    string statusText = 2;
-    Message message = 3;
-}
-
 // service
 service Roque {
-    rpc Write (stream WriteRequest) returns (WriteResult);
-    rpc Read (ReadRequest) returns (stream ReadResult);
-    rpc Stream(ReadRequest) returns (stream ReadResult);
+    rpc Write (stream WriteRequest) returns (Void);
+    rpc Read (ReadRequest) returns (Message);
+    rpc Stream(ReadRequest) returns (stream Message);
 }

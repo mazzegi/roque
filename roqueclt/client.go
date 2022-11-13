@@ -42,32 +42,22 @@ func (clt *Client) WriteContext(ctx context.Context, msgs ...roquemsg.Message) e
 			return fmt.Errorf("roqueclt.write.send: %w", err)
 		}
 	}
-	res, err := wc.CloseAndRecv()
+	_, err = wc.CloseAndRecv()
 	if err != nil {
 		return fmt.Errorf("roqueclt.closeandrecv: %w", err)
-	}
-	if res.Status != roqueproto.RequestStatus_STATUS_OK {
-		return fmt.Errorf("write.status: %s", res.StatusText)
 	}
 	return nil
 }
 
 func (clt *Client) ReadContext(ctx context.Context, clientID string, topic roquemsg.Topic) (roquemsg.Message, error) {
-	rc, err := clt.roqueClt.Read(ctx, &roqueproto.ReadRequest{
+	msg, err := clt.roqueClt.Read(ctx, &roqueproto.ReadRequest{
 		ClientID: clientID,
 		Topic:    string(topic),
 	})
 	if err != nil {
 		return roquemsg.Message{}, fmt.Errorf("roqueclt.read: %w", err)
 	}
-	res, err := rc.Recv()
-	if err != nil {
-		return roquemsg.Message{}, fmt.Errorf("roqueclt.read.recv: %w", err)
-	}
-	if res.Status != roqueproto.RequestStatus_STATUS_OK {
-		return roquemsg.Message{}, fmt.Errorf("roqueclt.read.recv.status: %s", res.StatusText)
-	}
-	return roquemsg.FromProto(res.Message), nil
+	return roquemsg.FromProto(msg), nil
 }
 
 func (clt *Client) StreamContext(ctx context.Context, clientID string, topic roquemsg.Topic) (<-chan roquemsg.Message, error) {
@@ -78,12 +68,11 @@ func (clt *Client) StreamContext(ctx context.Context, clientID string, topic roq
 	if err != nil {
 		return nil, fmt.Errorf("roqueclt.stream: %w", err)
 	}
-
 	msgC := make(chan roquemsg.Message)
 	go func() {
 		defer close(msgC)
-		for res, err := sc.Recv(); err == nil; res, err = sc.Recv() {
-			msgC <- roquemsg.FromProto(res.Message)
+		for msg, err := sc.Recv(); err == nil; msg, err = sc.Recv() {
+			msgC <- roquemsg.FromProto(msg)
 		}
 	}()
 	return msgC, nil

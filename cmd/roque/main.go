@@ -21,8 +21,8 @@ func main() {
 	}
 	//writeContext(ctx, clt)
 	//readContext(ctx, clt)
-	//streamContext(ctx, clt)
-	writeContextError(ctx, clt)
+	streamContext(ctx, clt)
+	//writeContextError(ctx, clt)
 }
 
 func writeContext(ctx context.Context, clt *roqueclt.Client) {

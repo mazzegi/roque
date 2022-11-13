@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RoqueClient interface {
 	Write(ctx context.Context, opts ...grpc.CallOption) (Roque_WriteClient, error)
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_ReadClient, error)
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error)
 	Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error)
 }
 
@@ -46,7 +46,7 @@ func (c *roqueClient) Write(ctx context.Context, opts ...grpc.CallOption) (Roque
 
 type Roque_WriteClient interface {
 	Send(*WriteRequest) error
-	CloseAndRecv() (*WriteResult, error)
+	CloseAndRecv() (*Void, error)
 	grpc.ClientStream
 }
 
@@ -58,51 +58,28 @@ func (x *roqueWriteClient) Send(m *WriteRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *roqueWriteClient) CloseAndRecv() (*WriteResult, error) {
+func (x *roqueWriteClient) CloseAndRecv() (*Void, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(WriteResult)
+	m := new(Void)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_ReadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[1], "/roqueproto.Roque/Read", opts...)
+func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error) {
+	out := new(Message)
+	err := c.cc.Invoke(ctx, "/roqueproto.Roque/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &roqueReadClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Roque_ReadClient interface {
-	Recv() (*ReadResult, error)
-	grpc.ClientStream
-}
-
-type roqueReadClient struct {
-	grpc.ClientStream
-}
-
-func (x *roqueReadClient) Recv() (*ReadResult, error) {
-	m := new(ReadResult)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 func (c *roqueClient) Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[2], "/roqueproto.Roque/Stream", opts...)
+	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[1], "/roqueproto.Roque/Stream", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +94,7 @@ func (c *roqueClient) Stream(ctx context.Context, in *ReadRequest, opts ...grpc.
 }
 
 type Roque_StreamClient interface {
-	Recv() (*ReadResult, error)
+	Recv() (*Message, error)
 	grpc.ClientStream
 }
 
@@ -125,8 +102,8 @@ type roqueStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *roqueStreamClient) Recv() (*ReadResult, error) {
-	m := new(ReadResult)
+func (x *roqueStreamClient) Recv() (*Message, error) {
+	m := new(Message)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -138,7 +115,7 @@ func (x *roqueStreamClient) Recv() (*ReadResult, error) {
 // for forward compatibility
 type RoqueServer interface {
 	Write(Roque_WriteServer) error
-	Read(*ReadRequest, Roque_ReadServer) error
+	Read(context.Context, *ReadRequest) (*Message, error)
 	Stream(*ReadRequest, Roque_StreamServer) error
 	mustEmbedUnimplementedRoqueServer()
 }
@@ -150,8 +127,8 @@ type UnimplementedRoqueServer struct {
 func (UnimplementedRoqueServer) Write(Roque_WriteServer) error {
 	return status.Errorf(codes.Unimplemented, "method Write not implemented")
 }
-func (UnimplementedRoqueServer) Read(*ReadRequest, Roque_ReadServer) error {
-	return status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedRoqueServer) Read(context.Context, *ReadRequest) (*Message, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 func (UnimplementedRoqueServer) Stream(*ReadRequest, Roque_StreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
@@ -174,7 +151,7 @@ func _Roque_Write_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type Roque_WriteServer interface {
-	SendAndClose(*WriteResult) error
+	SendAndClose(*Void) error
 	Recv() (*WriteRequest, error)
 	grpc.ServerStream
 }
@@ -183,7 +160,7 @@ type roqueWriteServer struct {
 	grpc.ServerStream
 }
 
-func (x *roqueWriteServer) SendAndClose(m *WriteResult) error {
+func (x *roqueWriteServer) SendAndClose(m *Void) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -195,25 +172,22 @@ func (x *roqueWriteServer) Recv() (*WriteRequest, error) {
 	return m, nil
 }
 
-func _Roque_Read_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ReadRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Roque_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(RoqueServer).Read(m, &roqueReadServer{stream})
-}
-
-type Roque_ReadServer interface {
-	Send(*ReadResult) error
-	grpc.ServerStream
-}
-
-type roqueReadServer struct {
-	grpc.ServerStream
-}
-
-func (x *roqueReadServer) Send(m *ReadResult) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(RoqueServer).Read(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/roqueproto.Roque/Read",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoqueServer).Read(ctx, req.(*ReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Roque_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -225,7 +199,7 @@ func _Roque_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type Roque_StreamServer interface {
-	Send(*ReadResult) error
+	Send(*Message) error
 	grpc.ServerStream
 }
 
@@ -233,7 +207,7 @@ type roqueStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *roqueStreamServer) Send(m *ReadResult) error {
+func (x *roqueStreamServer) Send(m *Message) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -243,17 +217,17 @@ func (x *roqueStreamServer) Send(m *ReadResult) error {
 var Roque_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "roqueproto.Roque",
 	HandlerType: (*RoqueServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Read",
+			Handler:    _Roque_Read_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Write",
 			Handler:       _Roque_Write_Handler,
 			ClientStreams: true,
-		},
-		{
-			StreamName:    "Read",
-			Handler:       _Roque_Read_Handler,
-			ServerStreams: true,
 		},
 		{
 			StreamName:    "Stream",

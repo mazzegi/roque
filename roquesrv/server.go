@@ -45,52 +45,29 @@ func (s *Server) Write(in roqueproto.Roque_WriteServer) error {
 	for wr, err := in.Recv(); err == nil; wr, err = in.Recv() {
 		werr := s.dispatcher.WriteContext(in.Context(), roquemsg.FromProto(wr.Message))
 		if werr != nil {
-			in.SendAndClose(&roqueproto.WriteResult{
-				Status:     roqueproto.RequestStatus_STATUS_ERR,
-				StatusText: werr.Error(),
-			})
+			in.SendAndClose(&roqueproto.Void{})
 			return fmt.Errorf("dispatcher.write: %w", werr)
 		}
 	}
-	in.SendAndClose(&roqueproto.WriteResult{
-		Status:     roqueproto.RequestStatus_STATUS_OK,
-		StatusText: "ok",
-	})
+	in.SendAndClose(&roqueproto.Void{})
 	return nil
 }
 
-func (s *Server) Read(in *roqueproto.ReadRequest, out roqueproto.Roque_ReadServer) error {
-	msg, err := s.dispatcher.ReadContext(out.Context(), in.ClientID, roquemsg.Topic(in.Topic))
+func (s *Server) Read(ctx context.Context, in *roqueproto.ReadRequest) (*roqueproto.Message, error) {
+	msg, err := s.dispatcher.ReadContext(ctx, in.ClientID, roquemsg.Topic(in.Topic))
 	if err != nil {
-		out.Send(&roqueproto.ReadResult{
-			Status:     roqueproto.RequestStatus_STATUS_ERR,
-			StatusText: err.Error(),
-		})
-		return fmt.Errorf("dispatcher.read: %w", err)
+		return nil, fmt.Errorf("dispatcher.read: %w", err)
 	}
-	out.Send(&roqueproto.ReadResult{
-		Status:     roqueproto.RequestStatus_STATUS_OK,
-		StatusText: "ok",
-		Message:    roquemsg.ToProto(msg),
-	})
-	return nil
+	return roquemsg.ToProto(msg), nil
 }
 
 func (s *Server) Stream(in *roqueproto.ReadRequest, out roqueproto.Roque_StreamServer) error {
 	for {
 		msg, err := s.dispatcher.ReadContext(out.Context(), in.ClientID, roquemsg.Topic(in.Topic))
 		if err != nil {
-			out.Send(&roqueproto.ReadResult{
-				Status:     roqueproto.RequestStatus_STATUS_ERR,
-				StatusText: err.Error(),
-			})
 			return fmt.Errorf("dispatcher.read: %w", err)
 		}
-		err = out.Send(&roqueproto.ReadResult{
-			Status:     roqueproto.RequestStatus_STATUS_OK,
-			StatusText: "ok",
-			Message:    roquemsg.ToProto(msg),
-		})
+		err = out.Send(roquemsg.ToProto(msg))
 		if err != nil {
 			log.Warnf("stream.out.send: %v", err)
 			return fmt.Errorf("stream.out.send: %w", err)
