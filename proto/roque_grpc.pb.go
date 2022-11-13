@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: roqueproto/roque.proto
+// source: proto/roque.proto
 
-package roqueproto
+package proto
 
 import (
 	context "context"
@@ -36,7 +36,7 @@ func NewRoqueClient(cc grpc.ClientConnInterface) RoqueClient {
 }
 
 func (c *roqueClient) Write(ctx context.Context, opts ...grpc.CallOption) (Roque_WriteClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[0], "/roqueproto.Roque/Write", opts...)
+	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[0], "/proto.Roque/Write", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (x *roqueWriteClient) CloseAndRecv() (*Void, error) {
 
 func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error) {
 	out := new(Message)
-	err := c.cc.Invoke(ctx, "/roqueproto.Roque/Read", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.Roque/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.Ca
 }
 
 func (c *roqueClient) Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[1], "/roqueproto.Roque/Stream", opts...)
+	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[1], "/proto.Roque/Stream", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func _Roque_Read_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/roqueproto.Roque/Read",
+		FullMethod: "/proto.Roque/Read",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RoqueServer).Read(ctx, req.(*ReadRequest))
@@ -215,7 +215,7 @@ func (x *roqueStreamServer) Send(m *Message) error {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Roque_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "roqueproto.Roque",
+	ServiceName: "proto.Roque",
 	HandlerType: (*RoqueServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -235,5 +235,5 @@ var Roque_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "roqueproto/roque.proto",
+	Metadata: "proto/roque.proto",
 }

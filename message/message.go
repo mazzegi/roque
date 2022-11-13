@@ -1,8 +1,8 @@
-package roquemsg
+package message
 
 import (
 	"github.com/mazzegi/roque"
-	"github.com/mazzegi/roque/roqueproto"
+	"github.com/mazzegi/roque/proto"
 )
 
 type Topic string
@@ -12,14 +12,14 @@ type Message struct {
 	Data  []byte
 }
 
-func ToProto(msg Message) *roqueproto.Message {
-	return &roqueproto.Message{
+func ToProto(msg Message) *proto.Message {
+	return &proto.Message{
 		Topic: string(msg.Topic),
 		Data:  roque.SliceClone(msg.Data),
 	}
 }
 
-func FromProto(msg *roqueproto.Message) Message {
+func FromProto(msg *proto.Message) Message {
 	return Message{
 		Topic: Topic(msg.Topic),
 		Data:  roque.SliceClone(msg.Data),

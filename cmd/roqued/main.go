@@ -5,12 +5,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mazzegi/roque/roquesrv"
+	"github.com/mazzegi/roque/server"
 )
 
 func main() {
-	disp := roquesrv.NewDispatcher()
-	srv, err := roquesrv.New(":7001", disp)
+	disp := server.NewDispatcher()
+	srv, err := server.New(":7001", disp)
 	if err != nil {
 		panic(err)
 	}

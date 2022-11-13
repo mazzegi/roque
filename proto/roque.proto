@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "roque/roqueproto";
+option go_package = "roque/proto";
 
-package roqueproto;
+package proto;
 
 message Void {}
 
@@ -13,7 +13,7 @@ message Message {
 
 // write
 message WriteRequest {    
-    Message message = 2;
+    Message message = 1;
 }
 
 // read
