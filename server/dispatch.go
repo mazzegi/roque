@@ -3,39 +3,49 @@ package server
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mazzegi/log"
 	"github.com/mazzegi/roque/message"
 )
 
-func NewDispatcher() *Dispatcher {
-	return &Dispatcher{}
+func NewDispatcher(store Store) *Dispatcher {
+	return &Dispatcher{
+		store: store,
+	}
 }
 
 type Dispatcher struct {
+	store Store
 }
 
 func (d *Dispatcher) WriteContext(ctx context.Context, msg message.Message) error {
-	if msg.Topic == "test.error" {
-		return fmt.Errorf("received on test.error")
+	log.Infof("dispatcher: write topic=%q: %s", msg.Topic, string(msg.Data))
+	err := d.store.Append(string(msg.Topic), msg.Data)
+	if err != nil {
+		return fmt.Errorf("store.append: %w", err)
 	}
-	log.Infof("dispatcher: write [%s]: %s", msg.Topic, string(msg.Data))
 	return nil
 }
 
 func (d *Dispatcher) ReadContext(ctx context.Context, clientID string, topic message.Topic) (message.Message, error) {
-	if topic == "test.error" {
-		return message.Message{}, fmt.Errorf("received on test.error")
+	data, idx, err := d.store.FetchNext(clientID, string(topic))
+	if err != nil {
+		log.Debugf("fetchnext: %v", err)
+		return message.Message{}, fmt.Errorf("store.fetchnext: %w", err)
 	}
-	<-time.After(500 * time.Millisecond)
-
 	return message.Message{
 		Topic: topic,
-		Data:  []byte(fmt.Sprintf("for [%s] on [%s]: %s", clientID, topic, time.Now().Format(time.RFC3339))),
+		Index: idx,
+		Data:  data,
 	}, nil
 }
 
 func (d *Dispatcher) CommitContext(ctx context.Context, clientID string, topic message.Topic, idx int) error {
+	log.Infof("dispatcher: commit clientid=%q, topic=%q: %d", clientID, topic, idx)
+	err := d.store.Commit(clientID, string(topic), idx)
+	if err != nil {
+		log.Debugf("commit: %v", err)
+		return fmt.Errorf("store.commit: %w", err)
+	}
 	return nil
 }
