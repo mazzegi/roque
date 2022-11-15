@@ -32,19 +32,11 @@ func (clt *Client) Close() {
 }
 
 func (clt *Client) WriteContext(ctx context.Context, msgs ...message.Message) error {
-	wc, err := clt.roqueClt.Write(ctx)
+	_, err := clt.roqueClt.Write(ctx, &proto.WriteRequest{
+		Messages: message.SliceToProto(msgs),
+	})
 	if err != nil {
 		return fmt.Errorf("roqueclt.write: %w", err)
-	}
-	for _, m := range msgs {
-		err := wc.Send(&proto.WriteRequest{Message: message.ToProto(m)})
-		if err != nil {
-			return fmt.Errorf("roqueclt.write.send: %w", err)
-		}
-	}
-	_, err = wc.CloseAndRecv()
-	if err != nil {
-		return fmt.Errorf("roqueclt.closeandrecv: %w", err)
 	}
 	return nil
 }

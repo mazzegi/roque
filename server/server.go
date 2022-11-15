@@ -41,16 +41,14 @@ func (s *Server) RunContext(ctx context.Context) {
 
 //
 
-func (s *Server) Write(in proto.Roque_WriteServer) error {
-	for wr, err := in.Recv(); err == nil; wr, err = in.Recv() {
-		werr := s.dispatcher.WriteContext(in.Context(), message.FromProto(wr.Message))
-		if werr != nil {
-			in.SendAndClose(&proto.Void{})
-			return fmt.Errorf("dispatcher.write: %w", werr)
+func (s *Server) Write(ctx context.Context, in *proto.WriteRequest) (*proto.Void, error) {
+	for _, m := range message.SliceFromProto(in.Messages) {
+		err := s.dispatcher.WriteContext(ctx, m)
+		if err != nil {
+			return &proto.Void{}, fmt.Errorf("dispatcher.write: %w", err)
 		}
 	}
-	in.SendAndClose(&proto.Void{})
-	return nil
+	return &proto.Void{}, nil
 }
 
 func (s *Server) Read(ctx context.Context, in *proto.ReadRequest) (*proto.Message, error) {

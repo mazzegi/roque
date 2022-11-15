@@ -28,3 +28,19 @@ func FromProto(msg *proto.Message) Message {
 		Data:  slices.Clone(msg.Data),
 	}
 }
+
+func SliceToProto(msgs []Message) []*proto.Message {
+	pmsgs := make([]*proto.Message, len(msgs))
+	for i, m := range msgs {
+		pmsgs[i] = ToProto(m)
+	}
+	return pmsgs
+}
+
+func SliceFromProto(pmsgs []*proto.Message) []Message {
+	msgs := make([]Message, len(pmsgs))
+	for i, pm := range pmsgs {
+		msgs[i] = FromProto(pm)
+	}
+	return msgs
+}

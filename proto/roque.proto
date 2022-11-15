@@ -14,7 +14,7 @@ message Message {
 
 // write
 message WriteRequest {    
-    Message message = 1;
+    repeated Message messages = 1;
 }
 
 // read
@@ -32,7 +32,7 @@ message CommitRequest {
 
 // service
 service Roque {
-    rpc Write (stream WriteRequest) returns (Void);
+    rpc Write (WriteRequest) returns (Void);
     rpc Read (ReadRequest) returns (Message);
     rpc Stream(ReadRequest) returns (stream Message);
     rpc Commit(CommitRequest) returns (Void);
