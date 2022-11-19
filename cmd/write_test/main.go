@@ -19,14 +19,16 @@ func main() {
 		panic(err)
 	}
 
-	count := 100
+	count := 10
+	var msgs []message.Message
 	for i := 0; i < count; i++ {
-		err = clt.WriteContext(ctx, message.Message{
+		msgs = append(msgs, message.Message{
 			Topic: "test.topic",
 			Data:  []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339Nano))),
 		})
-		if err != nil {
-			panic(err)
-		}
+	}
+	err = clt.WriteContext(ctx, msgs...)
+	if err != nil {
+		panic(err)
 	}
 }

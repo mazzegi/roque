@@ -19,9 +19,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//writeContext(ctx, clt)
+	writeContext(ctx, clt)
 	//readContext(ctx, clt)
-	streamContext(ctx, clt)
 	//writeContextError(ctx, clt)
 }
 
@@ -46,19 +45,13 @@ func writeContextError(ctx context.Context, clt *client.Client) {
 }
 
 func readContext(ctx context.Context, clt *client.Client) {
-	msg, err := clt.ReadContext(ctx, "test.client", "test.topic")
+	msgs, err := clt.ReadContext(ctx, "test.client", "test.topic", 1)
 	if err != nil {
 		panic(err)
 	}
+	if len(msgs) == 0 {
+		panic("no messages")
+	}
+	msg := msgs[0]
 	log.Infof("recv: [%s]: %s", msg.Topic, string(msg.Data))
-}
-
-func streamContext(ctx context.Context, clt *client.Client) {
-	msgC, err := clt.StreamContext(ctx, "test.client", "test.topic")
-	if err != nil {
-		panic(err)
-	}
-	for msg := range msgC {
-		log.Infof("recv: [%s]: %s", msg.Topic, string(msg.Data))
-	}
 }

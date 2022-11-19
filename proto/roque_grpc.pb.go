@@ -23,8 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RoqueClient interface {
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*Void, error)
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error)
-	Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error)
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Void, error)
 }
 
@@ -45,45 +44,13 @@ func (c *roqueClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.
 	return out, nil
 }
 
-func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
+func (c *roqueClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+	out := new(ReadResponse)
 	err := c.cc.Invoke(ctx, "/proto.Roque/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
-}
-
-func (c *roqueClient) Stream(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (Roque_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Roque_ServiceDesc.Streams[0], "/proto.Roque/Stream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &roqueStreamClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Roque_StreamClient interface {
-	Recv() (*Message, error)
-	grpc.ClientStream
-}
-
-type roqueStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *roqueStreamClient) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func (c *roqueClient) Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Void, error) {
@@ -100,8 +67,7 @@ func (c *roqueClient) Commit(ctx context.Context, in *CommitRequest, opts ...grp
 // for forward compatibility
 type RoqueServer interface {
 	Write(context.Context, *WriteRequest) (*Void, error)
-	Read(context.Context, *ReadRequest) (*Message, error)
-	Stream(*ReadRequest, Roque_StreamServer) error
+	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Commit(context.Context, *CommitRequest) (*Void, error)
 	mustEmbedUnimplementedRoqueServer()
 }
@@ -113,11 +79,8 @@ type UnimplementedRoqueServer struct {
 func (UnimplementedRoqueServer) Write(context.Context, *WriteRequest) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
 }
-func (UnimplementedRoqueServer) Read(context.Context, *ReadRequest) (*Message, error) {
+func (UnimplementedRoqueServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
-}
-func (UnimplementedRoqueServer) Stream(*ReadRequest, Roque_StreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }
 func (UnimplementedRoqueServer) Commit(context.Context, *CommitRequest) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
@@ -171,27 +134,6 @@ func _Roque_Read_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Roque_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ReadRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(RoqueServer).Stream(m, &roqueStreamServer{stream})
-}
-
-type Roque_StreamServer interface {
-	Send(*Message) error
-	grpc.ServerStream
-}
-
-type roqueStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *roqueStreamServer) Send(m *Message) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 func _Roque_Commit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CommitRequest)
 	if err := dec(in); err != nil {
@@ -230,12 +172,6 @@ var Roque_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Roque_Commit_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Stream",
-			Handler:       _Roque_Stream_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/roque.proto",
 }

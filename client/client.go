@@ -41,33 +41,16 @@ func (clt *Client) WriteContext(ctx context.Context, msgs ...message.Message) er
 	return nil
 }
 
-func (clt *Client) ReadContext(ctx context.Context, clientID string, topic message.Topic) (message.Message, error) {
-	msg, err := clt.roqueClt.Read(ctx, &proto.ReadRequest{
+func (clt *Client) ReadContext(ctx context.Context, clientID string, topic message.Topic, limit int) ([]message.Message, error) {
+	resp, err := clt.roqueClt.Read(ctx, &proto.ReadRequest{
 		ClientID: clientID,
 		Topic:    string(topic),
+		Limit:    int64(limit),
 	})
 	if err != nil {
-		return message.Message{}, fmt.Errorf("roqueclt.read: %w", err)
+		return nil, fmt.Errorf("roqueclt.read: %w", err)
 	}
-	return message.FromProto(msg), nil
-}
-
-func (clt *Client) StreamContext(ctx context.Context, clientID string, topic message.Topic) (<-chan message.Message, error) {
-	sc, err := clt.roqueClt.Stream(ctx, &proto.ReadRequest{
-		ClientID: clientID,
-		Topic:    string(topic),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("roqueclt.stream: %w", err)
-	}
-	msgC := make(chan message.Message)
-	go func() {
-		defer close(msgC)
-		for msg, err := sc.Recv(); err == nil; msg, err = sc.Recv() {
-			msgC <- message.FromProto(msg)
-		}
-	}()
-	return msgC, nil
+	return message.SliceFromProto(resp.Messages), nil
 }
 
 func (clt *Client) CommitContext(ctx context.Context, clientID string, topic message.Topic, idx int) error {

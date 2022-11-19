@@ -19,15 +19,21 @@ func main() {
 	}
 	clientID := "test.client"
 	topic := "test.topic"
-
+	limit := 5
 	for {
-		msg, err := clt.ReadContext(ctx, clientID, message.Topic(topic))
+		msgs, err := clt.ReadContext(ctx, clientID, message.Topic(topic), limit)
 		if err != nil {
 			log.Infof("ended with error: %v", err)
 			break
 		}
-		log.Infof("recv: [%s:%d]: %s", msg.Topic, msg.Index, string(msg.Data))
-		clt.CommitContext(ctx, clientID, msg.Topic, msg.Index)
+		if len(msgs) == 0 {
+			log.Infof("no messages")
+			break
+		}
+		for _, msg := range msgs {
+			log.Infof("recv: [%s:%d]: %s", msg.Topic, msg.Index, string(msg.Data))
+		}
+		lastMsg := msgs[len(msgs)-1]
+		clt.CommitContext(ctx, clientID, lastMsg.Topic, lastMsg.Index)
 	}
-
 }

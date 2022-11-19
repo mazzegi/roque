@@ -1,11 +1,14 @@
 package server
 
-import "github.com/mazzegi/roque/server/sqlite"
+import (
+	"github.com/mazzegi/roque/message"
+	"github.com/mazzegi/roque/server/sqlite"
+)
 
 type Store interface {
-	Append(topic string, data []byte) error
+	Append(msgs ...message.Message) error
 	Commit(clientID string, topic string, idx int) error
-	FetchNext(clientID string, topic string) (data []byte, idx int, err error)
+	FetchNext(clientID string, topic string, limit int) ([]message.Message, error)
 }
 
 func NewSqliteStore(dsn string) (Store, error) {
