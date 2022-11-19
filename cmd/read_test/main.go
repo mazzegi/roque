@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/mazzegi/log"
 	"github.com/mazzegi/roque/client"
@@ -20,8 +21,9 @@ func main() {
 	clientID := "test.client"
 	topic := "test.topic"
 	limit := 5
+	var timeout time.Duration = 1 * time.Minute
 	for {
-		msgs, err := clt.ReadContext(ctx, clientID, message.Topic(topic), limit)
+		msgs, err := clt.ReadContext(ctx, clientID, message.Topic(topic), limit, timeout)
 		if err != nil {
 			log.Infof("ended with error: %v", err)
 			break

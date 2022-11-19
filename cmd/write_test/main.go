@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/mazzegi/log"
 	"github.com/mazzegi/roque/client"
-	"github.com/mazzegi/roque/message"
 )
 
 func main() {
@@ -19,16 +19,16 @@ func main() {
 		panic(err)
 	}
 
+	topic := "test.topic"
 	count := 10
-	var msgs []message.Message
+	log.Infof("writing %d messages to %q", count, topic)
+	var msgs [][]byte
 	for i := 0; i < count; i++ {
-		msgs = append(msgs, message.Message{
-			Topic: "test.topic",
-			Data:  []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339Nano))),
-		})
+		msgs = append(msgs, []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339Nano))))
 	}
-	err = clt.WriteContext(ctx, msgs...)
+	err = clt.WriteContext(ctx, topic, msgs...)
 	if err != nil {
 		panic(err)
 	}
+	log.Infof("wrote %d messages to %q", count, topic)
 }

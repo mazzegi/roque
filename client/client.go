@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/mazzegi/roque/message"
 	"github.com/mazzegi/roque/proto"
@@ -31,9 +32,10 @@ func (clt *Client) Close() {
 	clt.closer.Close()
 }
 
-func (clt *Client) WriteContext(ctx context.Context, msgs ...message.Message) error {
+func (clt *Client) WriteContext(ctx context.Context, topic string, msgs ...[]byte) error {
 	_, err := clt.roqueClt.Write(ctx, &proto.WriteRequest{
-		Messages: message.SliceToProto(msgs),
+		Topic:    topic,
+		Messages: msgs,
 	})
 	if err != nil {
 		return fmt.Errorf("roqueclt.write: %w", err)
@@ -41,11 +43,12 @@ func (clt *Client) WriteContext(ctx context.Context, msgs ...message.Message) er
 	return nil
 }
 
-func (clt *Client) ReadContext(ctx context.Context, clientID string, topic message.Topic, limit int) ([]message.Message, error) {
+func (clt *Client) ReadContext(ctx context.Context, clientID string, topic message.Topic, limit int, wait time.Duration) ([]message.Message, error) {
 	resp, err := clt.roqueClt.Read(ctx, &proto.ReadRequest{
 		ClientID: clientID,
 		Topic:    string(topic),
 		Limit:    int64(limit),
+		WaitMSec: wait.Milliseconds(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("roqueclt.read: %w", err)

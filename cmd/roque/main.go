@@ -9,7 +9,6 @@ import (
 
 	"github.com/mazzegi/log"
 	"github.com/mazzegi/roque/client"
-	"github.com/mazzegi/roque/message"
 )
 
 func main() {
@@ -25,27 +24,14 @@ func main() {
 }
 
 func writeContext(ctx context.Context, clt *client.Client) {
-	err := clt.WriteContext(ctx, message.Message{
-		Topic: "test.write",
-		Data:  []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339))),
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func writeContextError(ctx context.Context, clt *client.Client) {
-	err := clt.WriteContext(ctx, message.Message{
-		Topic: "test.error",
-		Data:  []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339))),
-	})
+	err := clt.WriteContext(ctx, "test.write", []byte(fmt.Sprintf("my time is %s", time.Now().Format(time.RFC3339))))
 	if err != nil {
 		panic(err)
 	}
 }
 
 func readContext(ctx context.Context, clt *client.Client) {
-	msgs, err := clt.ReadContext(ctx, "test.client", "test.topic", 1)
+	msgs, err := clt.ReadContext(ctx, "test.client", "test.topic", 1, 0)
 	if err != nil {
 		panic(err)
 	}

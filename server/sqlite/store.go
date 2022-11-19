@@ -95,7 +95,7 @@ type Store struct {
 	stmtCommit *sql.Stmt
 }
 
-func (s *Store) Append(msgs ...message.Message) error {
+func (s *Store) Append(topic string, msgs ...[]byte) error {
 	s.Lock()
 	defer s.Unlock()
 	tx, err := s.db.Begin()
@@ -105,7 +105,7 @@ func (s *Store) Append(msgs ...message.Message) error {
 	stmt := tx.Stmt(s.stmtAppend)
 	defer stmt.Close()
 	for _, msg := range msgs {
-		_, err := stmt.Exec(msg.Topic, msg.Topic, time.Now().UTC(), string(msg.Data))
+		_, err := stmt.Exec(topic, topic, time.Now().UTC(), string(msg))
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("exec: %w", err)

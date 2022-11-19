@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/mazzegi/roque/message"
 	"github.com/mazzegi/roque/proto"
@@ -41,7 +42,7 @@ func (s *Server) RunContext(ctx context.Context) {
 //
 
 func (s *Server) Write(ctx context.Context, in *proto.WriteRequest) (*proto.Void, error) {
-	err := s.dispatcher.WriteContext(ctx, message.SliceFromProto(in.Messages)...)
+	err := s.dispatcher.WriteContext(ctx, in.Topic, in.Messages...)
 	if err != nil {
 		return &proto.Void{}, fmt.Errorf("dispatcher.write: %w", err)
 	}
@@ -49,7 +50,7 @@ func (s *Server) Write(ctx context.Context, in *proto.WriteRequest) (*proto.Void
 }
 
 func (s *Server) Read(ctx context.Context, in *proto.ReadRequest) (*proto.ReadResponse, error) {
-	msgs, err := s.dispatcher.ReadContext(ctx, in.ClientID, message.Topic(in.Topic), int(in.Limit))
+	msgs, err := s.dispatcher.ReadContext(ctx, in.ClientID, message.Topic(in.Topic), int(in.Limit), time.Duration(in.WaitMSec)*time.Millisecond)
 	if err != nil {
 		return nil, fmt.Errorf("dispatcher.read: %w", err)
 	}

@@ -6,7 +6,7 @@ import (
 )
 
 type Store interface {
-	Append(msgs ...message.Message) error
+	Append(topic string, msgs ...[]byte) error
 	Commit(clientID string, topic string, idx int) error
 	FetchNext(clientID string, topic string, limit int) ([]message.Message, error)
 }
