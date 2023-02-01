@@ -20,7 +20,7 @@ func main() {
 	}
 
 	topic := "test.topic"
-	count := 10
+	count := 100
 	log.Infof("writing %d messages to %q", count, topic)
 	var msgs [][]byte
 	for i := 0; i < count; i++ {
