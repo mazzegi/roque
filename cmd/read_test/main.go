@@ -36,7 +36,7 @@ func main() {
 		}
 		if len(msgs) == 0 {
 			log.Infof("no messages")
-			break
+			continue
 		}
 		for _, msg := range msgs {
 			log.Infof("recv: [%s:%d]: %s", msg.Topic, msg.Index, string(msg.Data))
