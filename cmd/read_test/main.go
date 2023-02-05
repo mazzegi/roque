@@ -30,12 +30,13 @@ func main() {
 	case "grpc":
 		clt, err = createGRPCClient(ctx)
 	case "http":
-		clt, err = createHTTPCClient(ctx)
+		clt, err = createHTTPClient(ctx)
 	default:
 		panic("unknown transport " + transport)
 	}
 	if err != nil {
 		fmt.Printf("ERROR: %v\n", err)
+		os.Exit(1)
 	}
 
 	log.Infof("reading from %q as %q", *topic, *clientID)
@@ -67,7 +68,7 @@ func createGRPCClient(ctx context.Context) (roque.Client, error) {
 	return clt, nil
 }
 
-func createHTTPCClient(ctx context.Context) (roque.Client, error) {
+func createHTTPClient(ctx context.Context) (roque.Client, error) {
 	clt := http_client.New("http://127.0.0.1:8080/roque/")
 	return clt, nil
 }
