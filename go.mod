@@ -3,6 +3,7 @@ module github.com/mazzegi/roque
 go 1.19
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/mazzegi/log v0.0.0-20200601101706-01eae2241ec0
 	golang.org/x/exp v0.0.0-20221111204811-129d8d6c17ab
 	google.golang.org/grpc v1.50.1

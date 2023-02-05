@@ -1,4 +1,4 @@
-package server
+package grpc_server
 
 import (
 	"context"
@@ -6,13 +6,14 @@ import (
 	"net"
 	"time"
 
+	"github.com/mazzegi/roque"
 	"github.com/mazzegi/roque/joinctx"
 	"github.com/mazzegi/roque/message"
 	"github.com/mazzegi/roque/proto"
 	"google.golang.org/grpc"
 )
 
-func New(bind string, disp *Dispatcher) (*Server, error) {
+func New(bind string, disp *roque.Dispatcher) (*Server, error) {
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
 		return nil, fmt.Errorf("listen to %q: %w", bind, err)
@@ -25,7 +26,7 @@ func New(bind string, disp *Dispatcher) (*Server, error) {
 
 type Server struct {
 	listener   net.Listener
-	dispatcher *Dispatcher
+	dispatcher *roque.Dispatcher
 	proto.UnimplementedRoqueServer
 
 	write  func(ctx context.Context, in *proto.WriteRequest) (*proto.Void, error)

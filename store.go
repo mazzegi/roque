@@ -1,8 +1,8 @@
-package server
+package roque
 
 import (
 	"github.com/mazzegi/roque/message"
-	"github.com/mazzegi/roque/server/sqlite"
+	"github.com/mazzegi/roque/sqlite"
 )
 
 type Store interface {

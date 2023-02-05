@@ -1,4 +1,4 @@
-package client
+package grpc_client
 
 import (
 	"context"
@@ -32,9 +32,9 @@ func (clt *Client) Close() {
 	clt.closer.Close()
 }
 
-func (clt *Client) WriteContext(ctx context.Context, topic string, msgs ...[]byte) error {
+func (clt *Client) WriteContext(ctx context.Context, topic message.Topic, msgs ...[]byte) error {
 	_, err := clt.roqueClt.Write(ctx, &proto.WriteRequest{
-		Topic:    topic,
+		Topic:    string(topic),
 		Messages: msgs,
 	})
 	if err != nil {

@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/mazzegi/log"
-	"github.com/mazzegi/roque/client"
+	"github.com/mazzegi/roque"
+	"github.com/mazzegi/roque/grpc_client"
+	"github.com/mazzegi/roque/http_client"
 	"github.com/mazzegi/roque/message"
 )
 
@@ -19,12 +22,22 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
-	clt, err := client.DialContext(ctx, "127.0.0.1:7001")
-	if err != nil {
-		panic(err)
+
+	var clt roque.Client
+	var err error
+	var transport string = "http"
+	switch transport {
+	case "grpc":
+		clt, err = createGRPCClient(ctx)
+	case "http":
+		clt, err = createHTTPCClient(ctx)
+	default:
+		panic("unknown transport " + transport)
 	}
-	// clientID := "test.client"
-	// topic := "test.topic"
+	if err != nil {
+		fmt.Printf("ERROR: %v\n", err)
+	}
+
 	log.Infof("reading from %q as %q", *topic, *clientID)
 	limit := 5
 	var timeout time.Duration = 1 * time.Minute
@@ -44,4 +57,17 @@ func main() {
 		lastMsg := msgs[len(msgs)-1]
 		clt.CommitContext(ctx, *clientID, lastMsg.Topic, lastMsg.Index)
 	}
+}
+
+func createGRPCClient(ctx context.Context) (roque.Client, error) {
+	clt, err := grpc_client.DialContext(ctx, "127.0.0.1:7001")
+	if err != nil {
+		return nil, fmt.Errorf("grpc.dial: %w", err)
+	}
+	return clt, nil
+}
+
+func createHTTPCClient(ctx context.Context) (roque.Client, error) {
+	clt := http_client.New("http://127.0.0.1:8080/roque/")
+	return clt, nil
 }
