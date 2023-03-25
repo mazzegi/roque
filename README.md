@@ -1,2 +1,2 @@
 # roque
-Simple message queue.
+Simple message queue
