@@ -62,7 +62,7 @@ func (s *Store) init() error {
 	s.stmtFetch, err = s.db.Prepare(`
 		SELECT topic_index, data
 		FROM messages ms
-		WHERE topic_index > (SELECT COALESCE(MAX(topic_index),-1) FROM client_pointers WHERE client_id = ? AND topic = ?)
+		WHERE topic = ? AND topic_index > (SELECT COALESCE(MAX(topic_index),-1) FROM client_pointers WHERE client_id = ? AND topic = ?)
 		ORDER BY topic_index ASC
 		LIMIT ?;
 	`)
@@ -131,7 +131,7 @@ func (s *Store) Commit(clientID string, topic string, idx int) error {
 func (s *Store) FetchNext(clientID string, topic string, limit int) ([]message.Message, error) {
 	s.RLock()
 	defer s.RUnlock()
-	rows, err := s.stmtFetch.Query(clientID, topic, limit)
+	rows, err := s.stmtFetch.Query(topic, clientID, topic, limit)
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
